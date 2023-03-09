@@ -16,7 +16,7 @@ void vprintfmt(fmt_callback_t out, void *data, const char *fmt, va_list ap) {
 	int ladjust;   // output is left-aligned
 	char padc;     // padding char
 
-	for (;;) {
+	for (;*fmt;) {
 		/* scan for the next '%' */
 		/* Exercise 1.4: Your code here. (1/8) */
 		if (*fmt != '%') {
@@ -33,6 +33,11 @@ void vprintfmt(fmt_callback_t out, void *data, const char *fmt, va_list ap) {
 		
 		fmt++;
 		width = 0;
+		long_flag = 0;
+		neg_flag = 0;
+		ladjust = 0;
+		padc = ' ';
+
 		if (*fmt == '-') {
 			ladjust = 1;
 			fmt++;
