@@ -19,12 +19,36 @@ void vprintfmt(fmt_callback_t out, void *data, const char *fmt, va_list ap) {
 	for (;;) {
 		/* scan for the next '%' */
 		/* Exercise 1.4: Your code here. (1/8) */
+		if (*fmt != '%') {
+			print_char(out, data, *fmt, 1, 0);
+			fmt++;
+			continue;
+		}
 
 		/* flush the string found so far */
 		/* Exercise 1.4: Your code here. (2/8) */
 
 		/* check "are we hitting the end?" */
 		/* Exercise 1.4: Your code here. (3/8) */
+		
+		fmt++;
+		width = 0;
+		if (*fmt == '-') {
+			ladjust = 1;
+			fmt++;
+		}
+		if (*fmt == '0') {
+			padc = '0';
+			fmt++;
+		}
+		while (((*fmt) <= '9') && ((*fmt) >= '0')) {
+			width = 10 * width + (*fmt) - '0';
+			fmt++;
+		}
+		if (*fmt == 'l') {
+			long_flag = 1;
+			fmt++;
+		}
 
 		/* we found a '%' */
 		/* Exercise 1.4: Your code here. (4/8) */
@@ -56,13 +80,18 @@ void vprintfmt(fmt_callback_t out, void *data, const char *fmt, va_list ap) {
 			} else {
 				num = va_arg(ap, int);
 			}
-
+			
 			/*
 			 * Refer to other parts (case 'b', case 'o', etc.) and func 'print_num' to
 			 * complete this part. Think the differences between case 'd' and the
 			 * others. (hint: 'neg_flag').
 			 */
 			/* Exercise 1.4: Your code here. (8/8) */
+			if (num < 0) {
+				neg_flag = 1;
+				num = -num;
+			}
+			print_num(out, data, num, 10, neg_flag, width, ladjust, padc, 0);
 
 			break;
 
