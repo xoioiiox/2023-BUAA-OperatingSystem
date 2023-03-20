@@ -1,4 +1,37 @@
 #include <types.h>
+#include <drivers/dev_cons.h>
+#include <print.h>
+#include <printk.h>
+#include <trap.h>
+#include <string.h>
+void outputf(char *data, char *buf, int len);
+
+int sprintf(char *buf, const char *fmt, ...) {
+	char *start;
+	char *data;
+	start = buf;
+	va_list ap;
+	va_start(ap, fmt);
+	vprintfmt(outputf, data, fmt, ap);
+	va_end(ap);
+	while (*data != '\0') {
+		*buf = *data;
+		buf++;
+		data++;
+	}
+	*buf = '\0';
+	return (buf - start - 1);
+
+}
+
+void outputf(char *data, char *buf, int len) {
+	for (int i = 0; i < len; i++) {
+		*data = buf[i];
+		data++;
+	}
+
+}
+
 
 void *memcpy(void *dst, const void *src, size_t n) {
 	void *dstaddr = dst;
