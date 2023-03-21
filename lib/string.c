@@ -4,34 +4,24 @@
 #include <printk.h>
 #include <trap.h>
 #include <string.h>
-void outputf(char *data, char *buf, int len);
+
+void outputf(void *data, const char *buf, size_t len) {
+	char *s = *(char **)data;
+	for (int i = 0; i < len; i++) {
+		*s++ = buf[i];
+	}
+	*(char **)data = s;
+}
 
 int sprintf(char *buf, const char *fmt, ...) {
-	char *start;
-	char *data;
-	start = buf;
+	char *start = buf;
 	va_list ap;
 	va_start(ap, fmt);
-	vprintfmt(outputf, data, fmt, ap);
+	vprintfmt(outputf, &start, fmt, ap);
 	va_end(ap);
-	while (*data != '\0') {
-		*buf = *data;
-		buf++;
-		data++;
-	}
-	*buf = '\0';
-	return (buf - start - 1);
-
+	*start = '\0';
+	return 0;
 }
-
-void outputf(char *data, char *buf, int len) {
-	for (int i = 0; i < len; i++) {
-		*data = buf[i];
-		data++;
-	}
-
-}
-
 
 void *memcpy(void *dst, const void *src, size_t n) {
 	void *dstaddr = dst;
