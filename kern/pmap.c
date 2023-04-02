@@ -205,7 +205,7 @@ static int pgdir_walk(Pde *pgdir, u_long va, int create, Pte **ppte) {
 	/* Step 3: Assign the kernel virtual address of the page table entry to '*ppte'. */
 	/* Exercise 2.6: Your code here. (3/3) */
 	Pte *pgtable;
-	pgtable = (Pte *)KADDR(PTE_ADDR(*pgdir_entryp)); //-------
+	pgtable = (Pte *)KADDR(PTE_ADDR(*pgdir_entryp)); //-------PTE_ADDR：将低12位清零，实际上就是对应的物理地址
 	*ppte = pgtable + PTX(va);
 	return 0;
 }
@@ -226,7 +226,8 @@ int page_insert(Pde *pgdir, u_int asid, struct Page *pp, u_long va, u_int perm) 
 	Pte *pte;
 
 	/* Step 1: Get corresponding page table entry. */
-	pgdir_walk(pgdir, va, 0, &pte);
+	pgdir_walk(pgdir, va, 0, &pte); 
+	//pte:二级页表项虚地址，*pte:对应二级页表项的内容（高20位为物理，低12位为权限位）
 
 	if (pte && (*pte & PTE_V)) {
 		if (pa2page(*pte) != pp) {
