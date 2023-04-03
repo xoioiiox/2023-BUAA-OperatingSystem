@@ -18,15 +18,19 @@ struct Page_list page_free_list; /* Free list of physical pages */
 u_int page_perm_stat(Pde *pgdir, struct Page *pp, u_int perm_mask) {
 	u_int cnt = 0;
 	u_int perm;
-	Pde *pde = pgdir;
+	Pde *pde;
 	Pte *pte;
-	for (; pde != NULL; pde = pde + 1) {
+	Pte *ptea;
+	for (pde = pgdir; pde != NULL && (pde < pgdir + 1024); pde = pde + 1) {
 		pte = (Pte *)KADDR(PTE_ADDR(*pde));
-		for (; pte != NULL; pte = pte + 1) {
-			if ((PTE_ADDR(*pte) == page2pa(pp)) && (((*pte) & PTE_V) != 0)) {
-				perm = (*pte) & 0xFFF;
-				if ((perm & perm_mask) == perm_mask) {
-					cnt++;
+		ptea = pte;
+		for (; pte != NULL && (pte < ptea + 1024); pte = pte + 1) {
+			if ((*pte & PTE_V) && pte) {
+				if (PTE_ADDR(*pte) == page2pa(pp)) {
+					perm = (*pte) & 0xFFF;
+					if ((perm & perm_mask) == perm_mask) {
+						cnt++;
+					}
 				}
 			}
 		}
