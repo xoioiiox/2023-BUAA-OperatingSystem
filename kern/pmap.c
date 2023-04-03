@@ -15,6 +15,27 @@ static u_long freemem;
 
 struct Page_list page_free_list; /* Free list of physical pages */
 
+u_int page_perm_stat(Pde *pgdir, struct Page *pp, u_int perm_mask) {
+	u_int cnt = 0;
+	u_int perm;
+	Pde *pde = pgdir;
+	Pte *pte;
+	for (; pde != NULL; pde = pde + 1) {
+		pte = (Pte *)KADDR(PTE_ADDR(*pde));
+		for (; pte != NULL; pte = pte + 1) {
+			if ((PTE_ADDR(*pte) == page2pa(pp)) && (((*pte) & PTE_V) != 0)) {
+				perm = (*pte) & 0xFFF;
+				if ((perm & perm_mask) == perm_mask) {
+					cnt++;
+				}
+			}
+		}
+	}
+	return cnt;
+}
+
+
+
 /* Overview:
  *   Read memory size from DEV_MP to initialize 'memsize' and calculate the corresponding 'npage'
  *   value.
