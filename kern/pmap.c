@@ -22,6 +22,9 @@ u_int page_perm_stat(Pde *pgdir, struct Page *pp, u_int perm_mask) {
 	Pte *pte;
 	Pte *ptea;
 	for (pde = pgdir; pde != NULL && (pde < pgdir + 1024); pde = pde + 1) {
+		if (!(pde && (*pde & PTE_V))) {
+			continue;
+		}
 		pte = (Pte *)KADDR(PTE_ADDR(*pde));
 		ptea = pte;
 		for (; pte != NULL && (pte < ptea + 1024); pte = pte + 1) {
