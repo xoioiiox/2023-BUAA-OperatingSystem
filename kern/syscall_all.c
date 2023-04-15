@@ -257,7 +257,7 @@ int sys_exofork(void) {
 
 	/* Step 2: Copy the current Trapframe below 'KSTACKTOP' to the new env's 'env_tf'. */
 	/* Exercise 4.9: Your code here. (2/4) */
-	memcpy(&(e->env_tf), KSTACKTOP - sizeof(struct Trapframe), sizeof(struct Trapframe));
+	memcpy((void *)&(e->env_tf), (void *)KSTACKTOP - sizeof(struct Trapframe), sizeof(struct Trapframe));
 
 	/* Step 3: Set the new env's 'env_tf.regs[2]' to 0 to indicate the return value in child. */
 	/* Exercise 4.9: Your code here. (3/4) */
@@ -440,7 +440,7 @@ int sys_ipc_try_send(u_int envid, u_int value, u_int srcva, u_int perm) {
 		if(p == NULL) {
 			return -E_INVAL;
 		}
-		page_insert(e->env_pgdir, e->env_asid, p, e->env_ipc_dstva, perm);
+		try(page_insert(e->env_pgdir, e->env_asid, p, e->env_ipc_dstva, perm));
 	}
 
 	return 0;
@@ -544,7 +544,7 @@ void do_syscall(struct Trapframe *tf) {
 
 	/* Step 1: Add the EPC in 'tf' by a word (size of an instruction). */
 	/* Exercise 4.2: Your code here. (1/4) */
-	tf->cp0_epc+=4;
+	tf->cp0_epc += 4;
 
 	/* Step 2: Use 'sysno' to get 'func' from 'syscall_table'. */
 	/* Exercise 4.2: Your code here. (2/4) */

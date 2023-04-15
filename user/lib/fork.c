@@ -28,24 +28,25 @@ static void __attribute__((noreturn)) cow_entry(struct Trapframe *tf) {
 
 	/* Step 2: Remove 'PTE_COW' from the 'perm', and add 'PTE_D' to it. */
 	/* Exercise 4.13: Your code here. (2/6) */
-	perm = (perm - PTE_COW) | PTE_D;
+	perm = (perm ^ PTE_COW) | PTE_D;
 
 	/* Step 3: Allocate a new page at 'UCOW'. */
 	/* Exercise 4.13: Your code here. (3/6) */
-	syscall_mem_alloc(0, UCOW, perm);
+	try(syscall_mem_alloc(0, UCOW, PTE_D | PTE_V));
 
 	/* Step 4: Copy the content of the faulting page at 'va' to 'UCOW'. */
 	/* Hint: 'va' may not be aligned to a page! */
 	/* Exercise 4.13: Your code here. (4/6) */
-	memcpy(UCOW, ROUNDDOWN(va, BY2PG), BY2PG);
+	va = ROUNDDOWN(va, BY2PG);
+	memcpy(UCOW, va, BY2PG);
 
 	// Step 5: Map the page at 'UCOW' to 'va' with the new 'perm'.
 	/* Exercise 4.13: Your code here. (5/6) */
-	syscall_mem_map(0, UCOW, 0, va, perm); //round?
+	try(syscall_mem_map(0, UCOW, 0, va, perm));
 
 	// Step 6: Unmap the page at 'UCOW'.
 	/* Exercise 4.13: Your code here. (6/6) */
-	syscall_mem_unmap(0, UCOW);
+	try(syscall_mem_unmap(0, UCOW));
 
 	// Step 7: Return to the faulting routine.
 	int r = syscall_set_trapframe(0, tf);
@@ -90,18 +91,9 @@ static void duppage(u_int envid, u_int vpn) {
 	/* Hint: The page should be first mapped to the child before remapped in the parent. (Why?)
 	 */
 	/* Exercise 4.10: Your code here. (2/2) */
-	/*if (!(perm & PTE_D)) {
-		try(syscall_mem_map(0, addr, envid, addr, perm));
-	}
-	else if (perm & PTE_COW) {
-		try(syscall_mem_map(0, addr, envid, addr, perm));
-	}
-	else if (perm & PTE_LIBRARY) {
-		try(syscall_mem_map(0, addr, envid, addr, perm));
-	}*/
-	if ((perm & PTE_D) && (!(perm & PTE_LIBRARY)) && (!(perm & PTE_COW))) {
-		try(syscall_mem_map(0, addr, envid, addr, perm + PTE_COW - PTE_D));
-		try(syscall_mem_map(0, addr, 0, addr, perm + PTE_COW - PTE_D));
+	if ((perm & PTE_D) && (!(perm & PTE_LIBRARY))) {
+		try(syscall_mem_map(0, addr, envid, addr, (perm | PTE_COW) ^ PTE_D));
+		try(syscall_mem_map(0, addr, 0, addr, (perm | PTE_COW) ^ PTE_D));
 	}
 	else {
 		try(syscall_mem_map(0, addr, envid, addr, perm));
