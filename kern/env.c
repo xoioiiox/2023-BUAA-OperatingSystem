@@ -80,7 +80,7 @@ static void map_segment(Pde *pgdir, u_int asid, u_long pa, u_long va, u_int size
 		/* Exercise 3.2: Your code here. */
 		struct Page *pp;
 		pp = pa2page(pa + i);
-		page_insert(pgdir, asid, pp, va + i, perm);
+		page_insert(pgdir, asid, pp, va + i, perm | PTE_V);
 
 	}
 }
@@ -262,7 +262,7 @@ int env_alloc(struct Env **new, u_int parent_id) {
 	/* Exercise 3.4: Your code here. (3/4) */
 	e->env_id = mkenvid(e);
 	e->env_parent_id = parent_id;
-	asid_alloc(&(e->env_asid));
+	try(asid_alloc(&(e->env_asid)));
 
 
 	/* Step 4: Initialize the sp and 'cp0_status' in 'e->env_tf'. */
