@@ -32,7 +32,7 @@ static void __attribute__((noreturn)) cow_entry(struct Trapframe *tf) {
 
 	/* Step 3: Allocate a new page at 'UCOW'. */
 	/* Exercise 4.13: Your code here. (3/6) */
-	try(syscall_mem_alloc(0, UCOW, PTE_D | PTE_V));
+	try(syscall_mem_alloc(0, UCOW, perm));
 
 	/* Step 4: Copy the content of the faulting page at 'va' to 'UCOW'. */
 	/* Hint: 'va' may not be aligned to a page! */
@@ -91,7 +91,7 @@ static void duppage(u_int envid, u_int vpn) {
 	/* Hint: The page should be first mapped to the child before remapped in the parent. (Why?)
 	 */
 	/* Exercise 4.10: Your code here. (2/2) */
-	if ((perm & PTE_D) && (!(perm & PTE_LIBRARY))) {
+	if ((perm & PTE_D) && (!(perm & PTE_LIBRARY)) && (!(perm & PTE_COW))) {
 		try(syscall_mem_map(0, addr, envid, addr, (perm | PTE_COW) ^ PTE_D));
 		try(syscall_mem_map(0, addr, 0, addr, (perm | PTE_COW) ^ PTE_D));
 	}
