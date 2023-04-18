@@ -34,22 +34,21 @@ void do_reserved(struct Trapframe *tf) {
 
 void do_ov(struct Trapframe *tf) {
 	u_long va;
-	u_long *pa;
+	u_long pa;
 	va = tf->cp0_epc; //fault va
 	Pte *ppte;
 	struct Page *pp;
 	curenv->env_ov_cnt++;
 	pp = page_lookup(curenv->env_pgdir, va, &ppte);
-	pa = page2pa(pp) + (va & 0xfff);
-	//pgdir_walk(curenv->env_pgdir, va, 0, &ppte);
-	//pa = ((*ppte) & 0xfffff) | (va & 0xfff);
-	if (((*pa) & 0xf0000000) == 0) {
-		if (((*pa) & 0xf) == 0) {
-			*pa = (*pa) | 1;
+	pa =page2pa(pp) + (va & 0xfff);
+	va = KADDR(pa);
+	if (((*(u_long *)va) & 0xfb000000) == 0) {
+		if (((*(u_long *)va) & 0xf) == 0) {
+			*(u_long *)va = (*(u_long *)va) | 1;
 			printk("add ov handled\n");
 		}
 		else {
-			*pa = (*pa) | 1;
+			*(u_long *)va = (*(u_long *)va) | 1;
 			printk("sub ov handled\n");
 		}
 	}
@@ -59,13 +58,14 @@ void do_ov(struct Trapframe *tf) {
 		u_int imm;
 		u_int t;
 		u_int s;
-		t = (*pa) & 0x1f0000;
-		s = (*pa) & 0x3e00000;
+		t = ((*(u_long *)va) >> 16) & 0x1f;
+		s = ((*(u_long *)va) >> 21) & 0x1f;
 		t_n = tf->regs[t];
 		s_n = tf->regs[s];
-		imm = (*pa) & 0xffff;
+		imm = (*(u_long *)va) & 0xffff;
 		tf->regs[t] = s_n / 2 + imm / 2;
 		tf->cp0_epc += 4;
 		printk("addi ov handled\n");
 	}
+	
 }
