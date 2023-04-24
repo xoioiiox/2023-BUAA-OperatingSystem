@@ -4,6 +4,8 @@
 #ifndef __ASSEMBLER__
 
 enum {
+	SYS_set_gid,
+	SYS_ipc_try_group_send,
 	SYS_putchar,
 	SYS_print_cons,
 	SYS_getenvid,
