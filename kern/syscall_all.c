@@ -6,7 +6,63 @@
 #include <sched.h>
 #include <syscall.h>
 
+extern struct Env envs[NENV] __attribute__((aligned(BY2PG)));
 extern struct Env *curenv;
+static inline int is_illegal_va(u_long va);
+int a[NENV];
+int pos = 0;
+void get_child(int id) {
+	struct Env *e;
+	for (int i = 0; i<NENV; i++) {
+		e = &envs[i];
+		if(e->env_parent_id == id) {
+			a[pos++] = e->env_id;
+			get_child(e->env_id); 
+		}
+	}
+}
+
+int sys_ipc_try_broadcast(u_int value, u_int srcva, u_int perm) {
+	struct Env *e;
+	struct Page *p;
+
+	/* Step 1: Check if 'srcva' is either zero or a legal address. */
+	/* Exercise 4.8: Your code here. (4/8) */
+	if(srcva != 0 && is_illegal_va(srcva)) {
+		return -E_INVAL;
+	}
+
+	u_int id = curenv->env_id;
+	struct Env *le;
+	le = curenv;
+	get_child(id);
+	for (int i = 0; i < pos; i++) {
+		envid2env(a[i], &e, 0);
+		//if (e->env_parent_id == id) {
+			while(e->env_ipc_recving==0);
+			e->env_ipc_value = value;
+			e->env_ipc_from = curenv->env_id;
+			e->env_ipc_perm = PTE_V | perm;
+			e->env_ipc_recving = 0;
+			e->env_status = ENV_RUNNABLE;
+			TAILQ_INSERT_TAIL(&env_sched_list, e, env_sched_link);
+			if (srcva != 0) {
+			/* Exercise 4.8: Your code here. (8/8) */
+				Pte *pte;
+				p = page_lookup(curenv->env_pgdir, srcva, &pte);
+				if(p == NULL) {
+					return -E_INVAL;
+				}
+				try(page_insert(e->env_pgdir, e->env_asid, p, e->env_ipc_dstva, perm));
+			}
+		//	le = e;
+		//	id = e->env_id;
+		}
+	
+
+	return 0;
+}
+
 
 /* Overview:
  * 	This function is used to print a character on screen.
@@ -504,6 +560,7 @@ int sys_read_dev(u_int va, u_int pa, u_int len) {
 }
 
 void *syscall_table[MAX_SYSNO] = {
+    [SYS_ipc_try_broadcast] = sys_ipc_try_broadcast,
     [SYS_putchar] = sys_putchar,
     [SYS_print_cons] = sys_print_cons,
     [SYS_getenvid] = sys_getenvid,
