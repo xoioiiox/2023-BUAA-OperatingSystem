@@ -5,10 +5,7 @@
 #include <mmu.h>
 
 void ipc_broadcast(u_int val, void * srcva, u_int perm) {
-	int r;
-	while ((r = syscall_ipc_try_broadcast(val, srcva, perm)) == -E_IPC_NOT_RECV) {
-                  syscall_yield();
-          }
+	int r = syscall_ipc_try_broadcast(val, srcva, perm);
           user_assert(r == 0);
 }
 

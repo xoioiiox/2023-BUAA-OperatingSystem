@@ -13,10 +13,11 @@ int a[NENV];
 int pos = 0;
 void get_child(int id) {
 	struct Env *e;
-	for (int i = 0; i<NENV; i++) {
+	for (int i = 0; &envs[i] != NULL && i<NENV; i++) {
 		e = &envs[i];
 		if(e->env_parent_id == id) {
-			a[pos++] = e->env_id;
+			a[pos] = e->env_id;
+			pos++;
 			get_child(e->env_id); 
 		}
 	}
@@ -32,35 +33,30 @@ int sys_ipc_try_broadcast(u_int value, u_int srcva, u_int perm) {
 		return -E_INVAL;
 	}
 
-	u_int id = curenv->env_id;
-	struct Env *le;
-	le = curenv;
+	int id = curenv->env_id;
 	get_child(id);
+//	printk("%d\n", pos);
 	for (int i = 0; i < pos; i++) {
 		envid2env(a[i], &e, 0);
-		//if (e->env_parent_id == id) {
-			while(e->env_ipc_recving==0);
-			e->env_ipc_value = value;
-			e->env_ipc_from = curenv->env_id;
-			e->env_ipc_perm = PTE_V | perm;
-			e->env_ipc_recving = 0;
-			e->env_status = ENV_RUNNABLE;
-			TAILQ_INSERT_TAIL(&env_sched_list, e, env_sched_link);
-			if (srcva != 0) {
-			/* Exercise 4.8: Your code here. (8/8) */
-				Pte *pte;
-				p = page_lookup(curenv->env_pgdir, srcva, &pte);
-				if(p == NULL) {
-					return -E_INVAL;
-				}
-				try(page_insert(e->env_pgdir, e->env_asid, p, e->env_ipc_dstva, perm));
+		while(e->env_ipc_recving==0);
+		e->env_ipc_value = value;
+		e->env_ipc_from = curenv->env_id;
+		e->env_ipc_perm = PTE_V | perm;
+		e->env_ipc_recving = 0;
+		e->env_status = ENV_RUNNABLE;
+		TAILQ_INSERT_TAIL(&env_sched_list, e, env_sched_link);
+		if (srcva != 0) {
+		/* Exercise 4.8: Your code here. (8/8) */
+			Pte *pte;
+			p = page_lookup(curenv->env_pgdir, srcva, &pte);
+			if(p == NULL) {
+				return -E_INVAL;
 			}
-		//	le = e;
-		//	id = e->env_id;
+			try(page_insert(e->env_pgdir, e->env_asid, p, e->env_ipc_dstva, perm));
 		}
-	
-
-	return 0;
+	}
+	printk("11111");
+return 0;
 }
 
 
