@@ -28,11 +28,23 @@
 void ide_read(u_int diskno, u_int secno, void *dst, u_int nsecs) {
 	u_int begin = secno * BY2SECT;
 	u_int end = begin + nsecs * BY2SECT;
+	u_int rw = 0;
+	u_int flag = 0;
 
 	for (u_int off = 0; begin + off < end; off += BY2SECT) {
 		uint32_t temp = diskno;
+		uint32_t addr = begin + off;
 		/* Exercise 5.3: Your code here. (1/2) */
-
+		panic_on(syscall_write_dev(&temp, DEV_DISK_ADDRESS + DEV_DISK_ID, sizeof(uint32_t)));
+		panic_on(syscall_write_dev(&addr, DEV_DISK_ADDRESS + DEV_DISK_OFFSET, sizeof(uint32_t)));
+		rw = DEV_DISK_OPERATION_READ;
+		panic_on(syscall_write_dev(&rw, DEV_DISK_ADDRESS + DEV_DISK_START_OPERATION, sizeof(u_int)));
+		flag = 0;
+		panic_on(syscall_read_dev(&flag, DEV_DISK_ADDRESS + DEV_DISK_STATUS, sizeof(u_int)));
+		if (flag == 0) {
+			panic_on("ide_read_fail");
+		}
+		panic_on(syscall_read_dev(dst + off, DEV_DISK_ADDRESS + DEV_DISK_BUFFER, BY2SECT));
 	}
 }
 
@@ -55,10 +67,22 @@ void ide_read(u_int diskno, u_int secno, void *dst, u_int nsecs) {
 void ide_write(u_int diskno, u_int secno, void *src, u_int nsecs) {
 	u_int begin = secno * BY2SECT;
 	u_int end = begin + nsecs * BY2SECT;
+	u_int rw = 1;
+	u_int flag = 0;
 
 	for (u_int off = 0; begin + off < end; off += BY2SECT) {
 		uint32_t temp = diskno;
+		uint32_t addr = begin + off;
 		/* Exercise 5.3: Your code here. (2/2) */
-
+		panic_on(syscall_write_dev(&temp, DEV_DISK_ADDRESS + DEV_DISK_ID, sizeof(uint32_t)));
+		panic_on(syscall_write_dev(&addr, DEV_DISK_ADDRESS + DEV_DISK_OFFSET, sizeof(uint32_t)));
+		panic_on(syscall_write_dev(src + off, DEV_DISK_ADDRESS + DEV_DISK_BUFFER, BY2SECT));
+		rw = DEV_DISK_OPERATION_WRITE;
+		panic_on(syscall_write_dev(&rw, DEV_DISK_ADDRESS + DEV_DISK_START_OPERATION, sizeof(u_int)));
+		flag = 0;
+		panic_on(syscall_read_dev(&flag, DEV_DISK_ADDRESS + DEV_DISK_STATUS, sizeof(u_int)));
+		if (flag == 0) {
+			panic_on("ide_write_fail");
+		}
 	}
 }

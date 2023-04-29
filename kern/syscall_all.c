@@ -482,7 +482,23 @@ int sys_cgetc(void) {
  */
 int sys_write_dev(u_int va, u_int pa, u_int len) {
 	/* Exercise 5.1: Your code here. (1/2) */
-
+	if (is_illegal_va_range(va, len)) {
+		return -E_INVAL;
+	}
+	int flag = 0;
+	if ((pa >= 0x10000000) && ((pa + len) <= 0x10000020)) {
+		flag = 1;
+	}
+	if ((pa >= 0x13000000) && ((pa + len) <= 0x13004200)) {
+		flag = 1;
+	}
+	if ((pa >= 0x15000000) && ((pa + len) <= 0x15000200)) {
+		flag = 1;
+	}
+	if (flag == 0) {
+		return -E_INVAL;
+	}
+	memcpy(pa + 0xa0000000, va, len);
 	return 0;
 }
 
@@ -499,7 +515,23 @@ int sys_write_dev(u_int va, u_int pa, u_int len) {
  */
 int sys_read_dev(u_int va, u_int pa, u_int len) {
 	/* Exercise 5.1: Your code here. (2/2) */
-
+	if (is_illegal_va_range(va, len)) {
+		return -E_INVAL;
+	}
+	int flag = 0;
+	if ((pa >= 0x10000000) && ((pa + len) <= 0x10000020)) {
+		flag = 1;
+	}
+	if ((pa >= 0x13000000) && ((pa + len) <= 0x13004200)) {
+		flag = 1;
+	}
+	if ((pa >= 0x15000000) && ((pa + len) <= 0x15000200)) {
+		flag = 1;
+	}
+	if (flag == 0) {
+		return -E_INVAL;
+	}
+	memcpy(va, pa + 0xa0000000, len);
 	return 0;
 }
 
