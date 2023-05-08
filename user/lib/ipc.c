@@ -13,10 +13,10 @@ void barrier_alloc(int n) {
 void barrier_wait(void) {
 	int f;
 	f = syscall_get_f();
-	int sum = syscall_get_sum();
+//	int sum = syscall_get_sum();
 	if (f==1) {
-		sum++;
-		syscall_set_sum(sum);
+//		sum++;
+		syscall_set_sum(1);
 	//	debugf("@@@@@@@%d\n", syscall_get_barrier());
 //		debugf("@@%d\n", syscall_get_sum());
 		while (syscall_get_sum() != syscall_get_barrier()) {

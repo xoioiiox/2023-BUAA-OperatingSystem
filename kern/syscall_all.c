@@ -12,7 +12,7 @@ int sum = 0;
 int f = 1;
 
 void sys_set_sum(int n) {
-	sum = n;
+	sum += n;
 }
 
 int sys_get_sum() {
