@@ -7,6 +7,33 @@
 #include <syscall.h>
 
 extern struct Env *curenv;
+int barrier = 0;
+int sum = 0;
+int f = 1;
+
+void sys_set_sum(int n) {
+	sum = n;
+}
+
+int sys_get_sum() {
+	return sum;
+}
+
+void sys_set_f(int n) {
+	f = n;
+}
+
+int sys_get_f() {
+	return f;
+}
+
+void sys_set_barrier(int n) {
+	barrier = n;
+}
+
+int sys_get_barrier() {
+	return barrier;
+}
 
 /* Overview:
  * 	This function is used to print a character on screen.
@@ -504,7 +531,13 @@ int sys_read_dev(u_int va, u_int pa, u_int len) {
 }
 
 void *syscall_table[MAX_SYSNO] = {
+    [SYS_set_barrier] = sys_set_barrier,
+    [SYS_get_barrier] = sys_get_barrier,
     [SYS_putchar] = sys_putchar,
+    [SYS_set_f] = sys_set_f,
+    [SYS_get_f] = sys_get_f,
+    [SYS_set_sum] = sys_set_sum,
+    [SYS_get_sum] = sys_get_sum,
     [SYS_print_cons] = sys_print_cons,
     [SYS_getenvid] = sys_getenvid,
     [SYS_yield] = sys_yield,

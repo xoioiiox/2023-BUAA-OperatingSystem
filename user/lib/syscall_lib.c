@@ -4,6 +4,30 @@
 #include <syscall.h>
 #include <trap.h>
 
+void syscall_set_sum(int n) {
+	msyscall(SYS_set_sum, n);
+}
+
+int syscall_get_sum() {
+	return msyscall(SYS_get_sum);
+}
+
+void syscall_set_f(int n) {
+	msyscall(SYS_set_f, n);
+}
+
+int syscall_get_f() {
+	return msyscall(SYS_get_f);
+}
+
+void syscall_set_barrier(int n) {
+	msyscall(SYS_set_barrier, n);
+}
+
+int syscall_get_barrier() {
+	return msyscall(SYS_get_barrier);
+}
+
 void syscall_putchar(int ch) {
 	msyscall(SYS_putchar, ch);
 }

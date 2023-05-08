@@ -4,6 +4,29 @@
 #include <lib.h>
 #include <mmu.h>
 
+void barrier_alloc(int n) {
+	syscall_set_barrier(n);	
+	syscall_set_sum(0);
+	syscall_set_f(1);
+}
+
+void barrier_wait(void) {
+	int f;
+	f = syscall_get_f();
+	int sum = syscall_get_sum();
+	if (f==1) {
+		sum++;
+		syscall_set_sum(sum);
+	//	debugf("@@@@@@@%d\n", syscall_get_barrier());
+//		debugf("@@%d\n", sum);
+		while (sum != syscall_get_barrier()) {
+			syscall_yield();
+		}
+		syscall_set_f(0);
+	}
+	
+}
+
 // Send val to whom.  This function keeps trying until
 // it succeeds.  It should panic() on any error other than
 // -E_IPC_NOT_RECV.

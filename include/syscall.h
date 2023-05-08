@@ -4,6 +4,12 @@
 #ifndef __ASSEMBLER__
 
 enum {
+	SYS_get_sum,
+	SYS_set_sum,
+	SYS_get_f,
+	SYS_set_f,
+	SYS_set_barrier,
+	SYS_get_barrier,
 	SYS_putchar,
 	SYS_print_cons,
 	SYS_getenvid,
