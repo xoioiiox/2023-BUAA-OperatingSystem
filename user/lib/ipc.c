@@ -18,8 +18,9 @@ void barrier_wait(void) {
 		sum++;
 		syscall_set_sum(sum);
 	//	debugf("@@@@@@@%d\n", syscall_get_barrier());
-//		debugf("@@%d\n", sum);
-		while (sum != syscall_get_barrier()) {
+//		debugf("@@%d\n", syscall_get_sum());
+		while (syscall_get_sum() != syscall_get_barrier()) {
+//			debugf("@@%d\n", syscall_get_sum());
 			syscall_yield();
 		}
 		syscall_set_f(0);
