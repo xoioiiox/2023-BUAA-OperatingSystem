@@ -166,7 +166,7 @@ void unmap_block(u_int blockno) {
 	}
 	// Step 3: Unmap the virtual address via syscall.
 	/* Exercise 5.7: Your code here. (5/5) */
-	try(syscall_mem_unmap(0, va));
+	syscall_mem_unmap(0, va);
 	user_assert(!block_is_mapped(blockno));
 }
 
@@ -200,7 +200,7 @@ void free_block(u_int blockno) {
 	// Step 2: Set the flag bit of 'blockno' in 'bitmap'.
 	// Hint: Use bit operations to update the bitmap, such as b[n / W] |= 1 << (n % W).
 	/* Exercise 5.4: Your code here. (2/2) */
-	bitmap[blockno / 32] |= 1 << (blockno & 32);
+	bitmap[blockno / 32] |= 1 << (blockno % 32);
 
 }
 
