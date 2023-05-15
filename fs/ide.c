@@ -56,7 +56,7 @@ void ssd_write(u_int logic_no, void *src) {
 				}
 			}
 		}
-		int t[16] = {0};
+		char t[256] = {0};
 		ide_read(0, min_num1, &t, 1);
 		ide_write(0, min_num, &t, 1);
 		//memcpy(0xa0000000 +  DEV_DISK_ADDRESS + BY2SECT * min_num, 0xa0000000 +  DEV_DISK_ADDRESS + BY2SECT * min_num1, BY2SECT);
