@@ -7,6 +7,83 @@
 #include <lib.h>
 #include <mmu.h>
 
+int ys[32];
+int bitmap1;
+int cnt[32];
+
+void ssd_init() {
+	for (int i = 0; i < 32; i++) {
+		ys[i] = -1;
+		cnt[i] = 0;
+	}
+	bitmap1 = 0xffffffff;
+}
+
+int ssd_read(u_int logic_no, void *dst) {
+	int n = ys[logic_no];
+	if (n == -1) {
+		return -1;
+	}
+	ide_read(0, n, dst, 1);
+	return 0;
+}
+void ssd_write(u_int logic_no, void *src) {
+	int n = ys[logic_no];
+	int desn;
+	if (n != -1) {
+		//xiancachu
+		ssd_erase(logic_no);
+	}
+	int min = 1000000;
+	int min_num = 0;
+	int min1 = 100000;
+	int min_num1 = 0;
+	for (int i = 0; i < 32; i++) {
+		if (((bitmap1 >> i) & 1) == 1) {
+			if (cnt[i] < min) {
+				min = cnt[i];
+				min_num = i;
+			}
+		}
+	}
+	desn = min_num;
+	if (min >= 5) {
+		for (int i = 0; i < 32; i++) {
+			if (((bitmap1 >> i) & 1) == 0) {
+				if (cnt[i] < min1) {
+					min1 = cnt[i];
+					min_num1 = i;
+				}
+			}
+		}
+		ide_write(0, min_num, BY2SECT * min_num1, 1);
+		bitmap1 -= (1 << min_num);
+		for (int i = 0; i < 32; i++) {
+			if (ys[i] == min_num1) {
+				ssd_erase(i);
+				ys[i] = min_num;
+				break;
+			}
+		}
+		desn = min_num1;
+		//zuowei kexie
+	}
+	ide_write(0, desn, src, 1);
+	bitmap1 -= (1 << desn);
+	ys[logic_no] = desn;
+}
+void ssd_erase(u_int logic_no) {
+	if (ys[logic_no] != -1) {
+		int n = ys[logic_no];
+		cnt[n]++;
+		int tmp[16] = {0};
+		ide_write(0, n, &tmp, 1);
+		bitmap1 |= (1 << n);
+		ys[logic_no] = -1;
+	}
+}
+
+
 // Overview:
 //  read data from IDE disk. First issue a read request through
 //  disk register and then copy data from disk buffer
