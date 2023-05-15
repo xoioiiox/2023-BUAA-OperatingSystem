@@ -56,7 +56,7 @@ void ssd_write(u_int logic_no, void *src) {
 				}
 			}
 		}
-		char t[256] = {0};
+		int t[128] = {0};
 		ide_read(0, min_num1, &t, 1);
 		ide_write(0, min_num, &t, 1);
 		//memcpy(0xa0000000 +  DEV_DISK_ADDRESS + BY2SECT * min_num, 0xa0000000 +  DEV_DISK_ADDRESS + BY2SECT * min_num1, BY2SECT);
@@ -79,7 +79,7 @@ void ssd_erase(u_int logic_no) {
 	if (ys[logic_no] != -1) {
 		int n = ys[logic_no];
 		cnt[n]++;
-		int tmp[16] = {0};
+		int tmp[128] = {0};
 		ide_write(0, n, &tmp, 1);
 		bitmap1 |= (1 << n);
 		ys[logic_no] = -1;
