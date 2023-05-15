@@ -56,7 +56,7 @@ void ssd_write(u_int logic_no, void *src) {
 				}
 			}
 		}
-		ide_write(0, min_num, DEV_DISK_ADDRESS + BY2SECT * min_num1, 1);
+		ide_write(0, min_num, 0xa0000000 +  DEV_DISK_ADDRESS + BY2SECT * min_num1, 1);
 		bitmap1 -= (1 << min_num);
 		for (int i = 0; i < 32; i++) {
 			if (ys[i] == min_num1) {
