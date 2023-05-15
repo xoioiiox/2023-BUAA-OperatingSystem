@@ -26,7 +26,7 @@ void usleep(u_int us) {
 	while (1) {
 		// 读取当前时间
 		cur = get_time(&cur_u);
-		if (((int)cur - (int)start) * 100000 >= ((int)start_u + (int)us - (int)cur_u)/* 当前时间 >= 进入时间 + us 微秒*/) {
+		if (((int)cur - (int)start) * 1000000 >= ((int)start_u + (int)us - (int)cur_u)/* 当前时间 >= 进入时间 + us 微秒*/) {
 			return;
 		} else {
 			syscall_yield();
