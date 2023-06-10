@@ -41,7 +41,13 @@ ifeq ($(call lab-ge,6), true)
 			testbss.b \
 			testfdsharing.b \
 			pingpong.b \
-			init.b
+			init.b \
+			tree.b \
+			touch.b \
+			mkdir.b \
+			history.b \
+			declare.b \
+			unset.b
 endif
 
 USERLIB := $(addprefix lib/, $(USERLIB)) $(wildcard ../lib/*.o)

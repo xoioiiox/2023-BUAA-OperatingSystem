@@ -4,6 +4,8 @@
 #define WHITESPACE " \t\r\n"
 #define SYMBOLS "<|>&;()"
 
+int hangup = 0;
+int shellid = 0;
 /* Overview:
  *   Parse the next token from the string at s.
  *
@@ -31,6 +33,21 @@ int _gettoken(char *s, char **p1, char **p2) {
 	}
 	if (*s == 0) {
 		return 0;
+	}
+
+	if(*s == '"') {
+		*s++ = 0;
+		*p1 = s;
+		while (*s && *s != '"') {
+			s++;
+		}
+		if (*s == 0) {
+			debugf("\"dismatch\n");
+			return 0;
+		}
+		*s = 0;
+		*p2 = s;
+		return 'w';
 	}
 
 	if (strchr(SYMBOLS, *s)) {
@@ -63,6 +80,35 @@ int gettoken(char *s, char **p1) {
 	return c;
 }
 
+int is_name_equal(char *s1, char *s2) {
+	int i;
+ 	for (i = 0; s1[i] != '\0' && s2[i] != '\0'; i++) {
+		if (s1[i] != s2[i]) {
+			return 0;
+		}
+	}
+	if (s1[i] != '\0' || s2[i] != '\0') {
+		return 0;
+	}
+	return 1;
+}
+
+int is_value_cmd(char *name) {
+	char *dec = "declare.b";
+	char *uns = "unset.b";
+	char *ech = "echo.b";
+	char *dec1 = "declare";
+	char *uns1 = "unset";
+	char *ech1 = "echo";
+	if (is_name_equal(dec, name) || is_name_equal(uns, name) || is_name_equal(ech, name)) {
+		return 1;
+	}
+	if (is_name_equal(dec1, name) || is_name_equal(uns1, name) || is_name_equal(ech1, name)) {
+		return 1;
+	}
+	return 0;
+}
+
 #define MAXARGS 128
 
 int parsecmd(char **argv, int *rightpipe) {
@@ -70,6 +116,7 @@ int parsecmd(char **argv, int *rightpipe) {
 	while (1) {
 		char *t;
 		int fd, r;
+		int tmp;
 		int c = gettoken(0, &t);
 		switch (c) {
 		case 0:
@@ -102,7 +149,7 @@ int parsecmd(char **argv, int *rightpipe) {
 			}
 			// Open 't' for writing, dup it onto fd 1, and then close the original fd.
 			/* Exercise 6.5: Your code here. (2/3) */
-			r = open(t, O_WRONLY);
+			r = open(t, O_WRONLY | O_CREAT);
 			fd = r;
 			dup(fd, 1);
 			close(fd);
@@ -141,13 +188,26 @@ int parsecmd(char **argv, int *rightpipe) {
 				return argc;
 			}
 			//user_panic("| not implemented");
-
+			break;
+		case ';':;
+			tmp = fork();
+			if (tmp) { //father
+				wait(tmp);
+				return parsecmd(argv, tmp); 
+			} 
+			else {
+				return argc;
+			}
+			break;
+		case '&':;
+			hangup = 1;
 			break;
 		}
 	}
 
 	return argc;
 }
+
 
 void runcmd(char *s) {
 	gettoken(s, 0);
@@ -160,7 +220,33 @@ void runcmd(char *s) {
 	}
 	argv[argc] = 0;
 
+	if (is_value_cmd(argv[0])) {
+		char id[10];
+		debugf("cid:%d\n", shellid);
+		int tmp = shellid;
+		int pos = 0;
+		//memset(id, 0, sizeof(id));
+		while (tmp != 0) { //turn int into char[]
+			id[pos++] = '0' + (tmp % 10);
+			tmp /= 10;
+		}
+		id[pos] = '\0';
+		argv[argc] = id;
+		argc++;
+		argv[argc] = NULL;
+	}
+
+	char name[64];
 	int child = spawn(argv[0], argv);
+	if (child < 0) {
+		int len = strlen(argv[0]);
+		strcpy(name, argv[0]);
+		name[len] = '.';
+		name[len + 1] = 'b';
+		name[len + 2] = 0;
+		child = spawn(name, argv);
+	}
+
 	close_all();
 	if (child >= 0) {
 		wait(child);
@@ -173,8 +259,9 @@ void runcmd(char *s) {
 	exit();
 }
 
+char insert[1024];
 void readline(char *buf, u_int n) {
-	int r;
+	int r, pos = 0;
 	for (int i = 0; i < n; i++) {
 		if ((r = read(0, buf + i, 1)) != 1) {
 			if (r < 0) {
@@ -182,12 +269,16 @@ void readline(char *buf, u_int n) {
 			}
 			exit();
 		}
+		//debugf("buf:%s\n", buf);
+		again:;
 		if (buf[i] == '\b' || buf[i] == 0x7f) {
-			if (i > 0) {
-				i -= 2;
-			} else {
-				i = -1;
+			buf[i] = '\0';
+			int l = strlen(buf);
+			for (int i = l - pos - 1; i < l - 1; i++) {
+				buf[i] = buf[i + 1];
 			}
+			buf[l - 1] = '\0';
+			i-=2;
 			if (buf[i] != '\b') {
 				printf("\b");
 			}
@@ -195,6 +286,79 @@ void readline(char *buf, u_int n) {
 		if (buf[i] == '\r' || buf[i] == '\n') {
 			buf[i] = 0;
 			return;
+		}
+		if (buf[i] == 27) {
+			char c1, c2;
+			read(0, &c1, 1);
+			read(0, &c2, 1);
+			if (c1 == 91 && c2 == 65) { //up
+				debugf("\n");
+                i = history_get(buf, 0);
+				debugf("%s\n", buf);
+			} 
+			else if (c1 == 91 && c2 == 66) { //down
+				debugf("\n");
+				i = history_get(buf, 1);
+				debugf("%s\n", buf);
+			}
+			else if (c1 == 91 && c2 == 67) { //Right
+				pos--;
+				read(0, buf + i, 1);
+				if (buf[i] == 27 || buf[i] == '\b' || buf[i] == 0x7f) {
+					goto again;
+				}
+				else {
+					insert[0] = buf[i];
+					buf[i] = '\0';
+					str_insert(buf, i - pos);
+					for (int j = 0; j + i < n; j++) {
+						read(0, insert + j, 1);
+						if (buf[i] == 27 || buf[i] == '\b' || buf[i] == 0x7f) {
+							insert[j] = '\0';
+							str_insert(buf, i - pos);
+							i++;
+							buf[i] = 27;
+							goto again;
+						}
+						if (insert[j] == '\r' || insert[j] == '\n') {
+							insert[j] = '\0';
+							str_insert(buf, i - pos);
+							i = strlen(buf) - 1;
+							debugf("%s\n", buf);
+							return;
+						}
+					}
+				}
+			}
+			else if (c1 == 91 && c2 == 68) { //Left
+				pos++; //相对末尾距离
+				read(0, buf + i, 1);
+				if (buf[i] == 27 || buf[i] == '\b' || buf[i] == 0x7f) {
+					goto again;
+				}
+				else {
+					insert[0] = buf[i];
+					buf[i] = '\0';
+					str_insert(buf, i - pos);
+					for (int j = 0; j + i < n; j++) {
+						read(0, insert + j, 1);
+						if (buf[i] == 27 || buf[i] == '\b' || buf[i] == 0x7f) {
+							insert[j] = '\0';
+							str_insert(buf, i - pos);
+							i++;
+							buf[i] = 27;
+							goto again;
+						}
+						if (insert[j] == '\r' || insert[j] == '\n') {
+							insert[j] = '\0';
+							str_insert(buf, i - pos);
+							i = strlen(buf) - 1;
+							debugf("%s\n", buf);
+							return;
+						}
+					}
+				}
+			}
 		}
 	}
 	debugf("line too long\n");
@@ -204,11 +368,102 @@ void readline(char *buf, u_int n) {
 	buf[0] = 0;
 }
 
+int offset;	//-1 : last cmd
+int history_get(char *buf, int type) {	//type 0 : up
+	if (type == 0) {
+		offset--;
+	} 
+	else if (type == 1 && offset < 0) {
+		offset++;
+	}
+	int fdnum = open(".history", O_RDONLY);
+	if (fdnum < 0) {
+		debugf("Error : open .history failed\n");
+		return 0;
+	}
+	struct Fd *fd = num2fd(fdnum);
+	char *c;
+	char *begin = fd2data(fd);
+	char *end = begin + ((struct Filefd*)fd)->f_file.f_size;
+	c = end - 1;
+	while((*c == '\n' || *c == 0) && c > begin) {
+		c--;
+	}
+	if (c == begin) {	//no history cmd
+		buf[0] = '\0';
+		return 0;
+	}
+	c++;	//last \n or \0
+	int i;
+	for (i = 0; i > offset; i--) {
+		while(*c != '\n' && *c != '\0') { //get target line
+			c--;
+			if (c <= begin) {
+				break;
+			}
+		}
+		c--; //remove the '\n'
+		if (c <= begin) {
+			offset = i;
+			break;
+		}
+	} //now c is the end of target line
+	if (c > begin) {
+		while(c > begin && *c != '\n') {
+			c--;
+		}
+		if (*c == '\n') {
+			c++;
+		}
+	} 
+	else { //out of range
+		c = begin;
+	}
+	int p = 0;
+    while(buf[p] != '\0') {
+        buf[p] = '\0';
+        p++;
+    }
+    p = 0;
+	while (*c != '\n' && *c != '\0' && *c < end) {
+		buf[p] = *c;
+		p++;
+		c++;
+	}
+	return p - 1;
+}
+
+void str_insert(char *buf, int pos) {
+	int i = 0;
+	int len = strlen(buf);
+	int l1 = strlen(insert);
+	for (i = len - 1 + l1; i >= pos + l1; i--) {
+		buf[i] = buf[i - l1];
+	}
+	for (i = pos; i < pos + l1; i++) {
+		buf[i] = insert[i - pos];
+		insert[i - pos] = '\0';
+	}
+	len = strlen(buf);
+	buf[len] = '\0';
+}
+
 char buf[1024];
 
 void usage(void) {
 	debugf("usage: sh [-dix] [command-file]\n");
 	exit();
+}
+
+void history_save(char* cmd) {
+	int r = open(".history", O_CREAT | O_WRONLY | O_APPEND);
+	if (r < 0) {
+		debugf("open .history failed! in save\n");
+		return r;
+	}
+	write(r, cmd, strlen(cmd));
+	write(r, "\n", 1);
+	return 0;
 }
 
 int main(int argc, char **argv) {
@@ -220,6 +475,10 @@ int main(int argc, char **argv) {
 	debugf("::                     MOS Shell 2023                      ::\n");
 	debugf("::                                                         ::\n");
 	debugf(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n");
+
+	shellid = syscall_create_shellid();
+	debugf("--------This is shell %d--------\n", shellid);
+
 	ARGBEGIN {
 	case 'i':
 		interactive = 1;
@@ -246,7 +505,9 @@ int main(int argc, char **argv) {
 		if (interactive) {
 			printf("\n$ ");
 		}
+		memset(buf, 0, sizeof(buf));
 		readline(buf, sizeof buf);
+		history_save(buf);
 
 		if (buf[0] == '#') {
 			continue;
@@ -261,7 +522,9 @@ int main(int argc, char **argv) {
 			runcmd(buf);
 			exit();
 		} else {
-			wait(r);
+			if (hangup == 0) {
+				wait(r);
+			}
 		}
 	}
 	return 0;

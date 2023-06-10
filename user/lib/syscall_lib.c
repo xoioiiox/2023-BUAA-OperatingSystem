@@ -74,3 +74,23 @@ int syscall_read_dev(void *va, u_int dev, u_int len) {
 	/* Exercise 5.2: Your code here. (2/2) */
 	return msyscall(SYS_read_dev, va, dev, len);
 }
+
+int syscall_create_shellid() {
+	return msyscall(SYS_create_shellid, 0, 0, 0, 0, 0);
+}
+
+int syscall_declare_value(char* name, int value, int shellid, int rdonly) {
+	return msyscall(SYS_declare_value, name, value, shellid, rdonly, 0);
+}
+
+int syscall_unset_value(char* name, int shellid) {
+	return msyscall(SYS_unset_value, name, shellid, 0, 0, 0);
+}
+
+int syscall_get_value(char* name, int shellid) {
+	return msyscall(SYS_get_value, name, shellid, 0, 0);
+}
+
+int syscall_print_value(char* name, int shellid) {
+	return msyscall(SYS_print_value, name, shellid, 0, 0);
+}

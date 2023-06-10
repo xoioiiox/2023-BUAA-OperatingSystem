@@ -68,6 +68,11 @@ int syscall_ipc_recv(void *dstva);
 int syscall_cgetc();
 int syscall_write_dev(void *, u_int, u_int);
 int syscall_read_dev(void *, u_int, u_int);
+int syscall_create_shellid();
+int syscall_declare_value(char *name, int value, int shellid, int type);
+int syscall_unset_value(char *name, int shellid);
+int syscall_get_value(char *name, int shellid);
+int syscall_print_value(char *name, int shellid);
 
 // ipc.c
 void ipc_send(u_int whom, u_int val, const void *srcva, u_int perm);
@@ -130,6 +135,7 @@ int sync(void);
 #define O_WRONLY 0x0001	 /* open for writing only */
 #define O_RDWR 0x0002	 /* open for reading and writing */
 #define O_ACCMODE 0x0003 /* mask for above modes */
+#define O_APPEND 0x0004
 
 // Unimplemented open modes
 #define O_CREAT 0x0100 /* create if nonexistent */

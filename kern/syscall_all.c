@@ -5,6 +5,7 @@
 #include <printk.h>
 #include <sched.h>
 #include <syscall.h>
+#include "value.h"
 
 extern struct Env *curenv;
 
@@ -535,6 +536,26 @@ int sys_read_dev(u_int va, u_int pa, u_int len) {
 	return 0;
 }
 
+int sys_create_shellid() {
+	return create_shellid(); 
+}
+
+int sys_declare_value(char* name, int value, int shellid, int rdonly) { 
+	return declare_value(name, value, shellid, rdonly); 
+}
+
+int sys_unset_value(char* name, int shellid) { 
+	return unset_value(name, shellid); 
+}
+
+int sys_get_value(char* name, int shellid) { 
+	return get_value(name, shellid); 
+}
+
+int sys_print_value(char* name, int shellid) { 
+	return print_value(name, shellid); 
+}
+
 void *syscall_table[MAX_SYSNO] = {
     [SYS_putchar] = sys_putchar,
     [SYS_print_cons] = sys_print_cons,
@@ -554,6 +575,11 @@ void *syscall_table[MAX_SYSNO] = {
     [SYS_cgetc] = sys_cgetc,
     [SYS_write_dev] = sys_write_dev,
     [SYS_read_dev] = sys_read_dev,
+	[SYS_create_shellid] = sys_create_shellid,
+	[SYS_declare_value] = sys_declare_value,
+	[SYS_unset_value] = sys_unset_value,
+	[SYS_get_value] = sys_get_value,
+	[SYS_print_value] = sys_print_value,
 };
 
 /* Overview:
