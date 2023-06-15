@@ -279,9 +279,9 @@ void readline(char *buf, u_int n) {
 			}
 			buf[l - 1] = '\0';
 			i-=2;
-			if (buf[i] != '\b') {
+			/*if (buf[i] != '\b') {
 				printf("\b");
-			}
+			}*/
 		}
 		if (buf[i] == '\r' || buf[i] == '\n') {
 			buf[i] = 0;
@@ -304,7 +304,7 @@ void readline(char *buf, u_int n) {
 			else if (c1 == 91 && c2 == 67) { //Right
 				pos--;
 				read(0, buf + i, 1);
-				if (buf[i] == 27 || buf[i] == '\b' || buf[i] == 0x7f) {
+				if (buf[i] == 27 || buf[i] == 0x7f) {
 					goto again;
 				}
 				else {
@@ -313,11 +313,12 @@ void readline(char *buf, u_int n) {
 					str_insert(buf, i - pos);
 					for (int j = 0; j + i < n; j++) {
 						read(0, insert + j, 1);
-						if (buf[i] == 27 || buf[i] == '\b' || buf[i] == 0x7f) {
+						if (insert[j] == 27 || insert[j] == 0x7f) {
+							char t = insert[j];
 							insert[j] = '\0';
 							str_insert(buf, i - pos);
 							i++;
-							buf[i] = 27;
+							buf[i] = t;
 							goto again;
 						}
 						if (insert[j] == '\r' || insert[j] == '\n') {
@@ -333,7 +334,7 @@ void readline(char *buf, u_int n) {
 			else if (c1 == 91 && c2 == 68) { //Left
 				pos++; //相对末尾距离
 				read(0, buf + i, 1);
-				if (buf[i] == 27 || buf[i] == '\b' || buf[i] == 0x7f) {
+				if (buf[i] == 27 || buf[i] == 0x7f) {
 					goto again;
 				}
 				else {
@@ -342,11 +343,12 @@ void readline(char *buf, u_int n) {
 					str_insert(buf, i - pos);
 					for (int j = 0; j + i < n; j++) {
 						read(0, insert + j, 1);
-						if (buf[i] == 27 || buf[i] == '\b' || buf[i] == 0x7f) {
+						if (insert[j] == 27 || insert[j] == 0x7f) {
+							char t = insert[j];
 							insert[j] = '\0';
 							str_insert(buf, i - pos);
 							i++;
-							buf[i] = 27;
+							buf[i] = t;
 							goto again;
 						}
 						if (insert[j] == '\r' || insert[j] == '\n') {
