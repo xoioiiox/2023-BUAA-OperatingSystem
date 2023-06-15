@@ -222,7 +222,7 @@ void runcmd(char *s) {
 
 	if (is_value_cmd(argv[0])) {
 		char id[10];
-		debugf("cid:%d\n", shellid);
+		//debugf("cid:%d\n", shellid);
 		int tmp = shellid;
 		int pos = 0;
 		//memset(id, 0, sizeof(id));
