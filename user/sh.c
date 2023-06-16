@@ -110,13 +110,12 @@ int is_value_cmd(char *name) {
 }
 
 #define MAXARGS 128
-
 int parsecmd(char **argv, int *rightpipe) {
 	int argc = 0;
 	while (1) {
 		char *t;
 		int fd, r;
-		int tmp;
+		int tmp, tmp1;
 		int c = gettoken(0, &t);
 		switch (c) {
 		case 0:
@@ -191,16 +190,23 @@ int parsecmd(char **argv, int *rightpipe) {
 			break;
 		case ';':;
 			tmp = fork();
-			if (tmp) { //father
+			if (tmp) {
 				wait(tmp);
-				return parsecmd(argv, tmp); 
+				return parsecmd(argv, rightpipe); 
 			} 
 			else {
 				return argc;
 			}
 			break;
 		case '&':;
-			hangup = 1;
+			tmp1 = fork();
+			if (tmp1) {
+				return parsecmd(argv, rightpipe); 
+			} 
+			else {
+				hangup = 1;
+				return argc;
+			}
 			break;
 		}
 	}
@@ -211,7 +217,7 @@ int parsecmd(char **argv, int *rightpipe) {
 
 void runcmd(char *s) {
 	gettoken(s, 0);
-
+	hangup = 0;
 	char *argv[MAXARGS];
 	int rightpipe = 0;
 	int argc = parsecmd(argv, &rightpipe);
@@ -249,7 +255,11 @@ void runcmd(char *s) {
 
 	close_all();
 	if (child >= 0) {
-		wait(child);
+		if (!hangup) {
+			debugf("\033[31mwaiting\033[m\n");
+			wait(child);
+			debugf("\033[31mwaiting end\033[m\n");
+		}
 	} else {
 		debugf("spawn %s: %d\n", argv[0], child);
 	}
@@ -279,9 +289,9 @@ void readline(char *buf, u_int n) {
 			}
 			buf[l - 1] = '\0';
 			i-=2;
-			/*if (buf[i] != '\b') {
+			if (buf[i] != '\b') {
 				printf("\b");
-			}*/
+			}
 		}
 		if (buf[i] == '\r' || buf[i] == '\n') {
 			buf[i] = 0;
@@ -524,9 +534,7 @@ int main(int argc, char **argv) {
 			runcmd(buf);
 			exit();
 		} else {
-			if (hangup == 0) {
-				wait(r);
-			}
+			wait(r);
 		}
 	}
 	return 0;
